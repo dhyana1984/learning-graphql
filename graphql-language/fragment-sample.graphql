@@ -1,0 +1,54 @@
+fragment liftInfo on Lift{    # define a fragment based on Lift type
+  name
+  status
+  capacity
+  night
+  elevationGain
+}
+
+fragment trialInfo on Trail{
+  name
+  difficulty
+  accessedByLifts{
+    ...liftInfo
+  }
+}
+
+query liftAndTrial{
+  Lift(id:"jazz-cat"){
+    ...liftInfo              # spred liftInfo here
+    trailAccess{
+      ...trialInfo
+    }
+  }
+  Trail(id:"river-run"){
+    # name
+    # difficulty
+    # accessedByLifts{
+    #   ...liftInfo         # accessedByLifts is Lift type, so liftInfo could be spread here
+    # }
+    ...trialInfo            # trialInfo fragment is Trial type, so it can be spread here
+    groomed
+    trees
+    night
+  }
+}
+
+fragment trilStatus on Trail{
+  name
+  status
+}
+
+fragment trilDetails on Trail{
+  groomed
+  trees
+  night
+}
+
+
+query allTrilsByFragment{
+  allTrails{
+    ...trilStatus
+    ...trilDetails
+  }
+}
