@@ -1,0 +1,15 @@
+mutation closeLift {
+  setLiftStatus(id: "jazz-cat", status: CLOSED) {
+    name
+    status
+  }
+}
+
+# execute the mutation with arguments, note the arguments type declare
+mutation openLiftWithArguements($id: ID!, $status: LiftStatus!) {
+  # notice here how to use the arguments id: $id
+  setLiftStatus(id: $id, status: $status) {
+    name
+    status
+  }
+}
