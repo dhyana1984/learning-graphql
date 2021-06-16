@@ -1,0 +1,32 @@
+query searchWithInlineFragment {
+  search(status: OPEN) {
+    # this is inline fragment
+    ... on Lift {      # if return Lift type, the return field is id, name, status
+      id
+      name
+      status
+    }
+    ... on Trail {    # if return Trail type, the return field is groomed, difficulty
+      groomed
+      difficulty
+    }
+  }
+}
+
+fragment lift on Lift{
+    id
+    name
+    status
+}
+
+fragment trail on Trail{
+    groomed
+    difficulty
+}
+
+query searchWithNamedFragment{
+  search(status: CLOSED){
+    ...lift
+    ...trail
+  }
+}
