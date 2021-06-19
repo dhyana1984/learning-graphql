@@ -1,0 +1,8 @@
+# this should be execute in web as the listener is based on websocket to make real time update
+subscription {
+  liftStatusChange{
+    name
+    capacity
+    status
+  }
+}
