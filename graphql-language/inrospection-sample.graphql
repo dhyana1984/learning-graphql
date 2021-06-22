@@ -1,1 +1,50 @@
-# sample
+# sample# query which GraphQL type is available
+query allSchema{
+  __schema{
+    types{
+      name
+      description
+    }
+  }
+}
+
+# query details of Lift type 
+query liftDetails{
+  __type(name:"Lift"){
+    name
+    fields{
+      name
+      description
+      type{
+        name
+      }
+    }
+  }
+}
+
+
+# when meet new GraphQL API, use below query to display all available field in root type
+
+fragment typeFields on __Type{
+  name
+  fields{
+    name
+  }
+}
+
+
+query roots{
+  __schema{
+    queryType{
+      ...typeFields
+    }
+    mutationType{
+      ...typeFields
+    }
+    subscriptionType{
+      ...typeFields
+    }
+  }
+}
+
+
