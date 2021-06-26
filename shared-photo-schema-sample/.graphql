@@ -1,0 +1,93 @@
+
+# customized basic type
+scalar DateTime
+type Photo{
+    id: ID!
+    name:String!
+    url:String!
+    description:String
+    created:DateTime!
+    category:PhotoCategory!
+}
+
+# customized basic enum type
+enum PhotoCategory{
+    SELFIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
+}
+
+# User type
+type User{
+    githubLogin:ID!
+    name:String
+    avatar:String
+    postedPhotos:[Photo!]! # 1 to multiple 
+    inPhotos:[Photo!]! # multiple to multiple, a user should be tagged in multiple photos
+    friends:[Friendship!]!
+}
+
+# through type, connect users
+type Friendship{
+    friends:[User!]!
+    howLong: Int!
+    whereWeMet:Location
+}
+
+# Photo type
+type Photo{
+    id:ID!
+    name: String!
+    url: String!
+    description: String
+    created: DateTime!
+    category: PhotoCategory!
+    postedBy: User! # this is the edge between User and Photo
+    taggedUsers:[User!]! # multiple to multiple, a photo should be included in multiple users
+}
+
+# declare root type field, in Query type, we define API available query field
+type Query{
+    totalPhotos:Int!
+    # optional parameters, note "PhotoCategory" without "!"
+    allPhotos(category: PhotoCategory):[Photo!]!
+    totalUsers:Int!
+    # data paging, defaulty return 50 records. "start" is the start index, "first" is the count from "start"
+    allUsers(first: Int=50 start:Int=0): [User!]!
+    # set parameter, this parameter is mandartory, note "ID" is with "!"
+    User(githubLogin:ID!): User!
+    Photo(id:ID!):Photo!
+}
+
+type Mutation{
+    postPhoto(
+        name: String!
+        description: String
+        category: PhotoCategory = PORTRAIT
+    ):Photo!
+}
+
+input PostphotoInput{
+    name:String!
+    description:String
+    category: PhotoCategory=PORTRAIT
+}
+
+type Mutation{
+    postPhoto(input:PostphotoInput!):Photo!
+}
+
+
+# declare schema so that we can check the root type in document
+schema{
+    """
+    This is a annotation will display in documents
+    """
+    query:Query
+    "This is one line annotation"
+    mutation:Mutation
+}
+
+
