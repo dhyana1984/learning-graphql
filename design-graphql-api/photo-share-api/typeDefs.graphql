@@ -1,0 +1,55 @@
+# The .graphql is used to define GraphQL schema, this is pure text
+
+# The enum type  of category field of Photo type
+enum PhotoCategory {
+    SELFIE
+    PORTRAIT
+    ACTION
+    LANDSCAPE
+    GRAPHIC
+}
+
+# Customized standard type, use "scalar"
+scalar DateTime
+
+type User {
+    githubLogin: ID!
+    name: String
+    avatar: String
+    postedPhotos: [Photo!]! # one to multiple 
+    inPhotos:[Photo!]! # multiple to multiple 
+}
+
+type Photo {
+    id: ID!
+    url: String!
+    name: String!
+    description: String
+    category: PhotoCategory!
+    postedBy: User! # one to multiple 
+    taggedUsers:[User!]! # multiple to multiple 
+    created:DateTime!
+}
+
+# input type is used to define the input arguments as a customized type
+# Here PostPhotoInput is a input type for the argument of postPhoto in Mutation
+# please note the default value of category is PORTRAIT enum value
+input PostPhotoInput{
+    name: String!
+    category: PhotoCategory = PORTRAIT
+    description: String
+    githubUser: String!
+}
+
+# defile postPhoto mutation field
+type Mutation {
+    postPhoto(input: PostPhotoInput!): Photo!
+}
+
+# define totalPhotos query field
+type Query{
+    totalPhotos: Int!
+    totalUsers: Int!
+    allPhotos(after: DateTime): [Photo!]!
+    allUsers:[User!]!
+}
