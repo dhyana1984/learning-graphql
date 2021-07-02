@@ -1,6 +1,6 @@
 const { GraphQLScalarType } = require('graphql')
 const { authorizeWithGithub } = require('./lib')
-
+const fetch = require('node-fetch')
 
 let _id = 0
 const users = [
@@ -63,32 +63,81 @@ const githubAuth = async (parent, { code }, { db }) => {
     return { user, token: access_token }
 }
 
+const postPhoto = async (parent, args, { db, currentUser }) => {
+    /*
+     * Verify if user authorized via github 
+     * Please note when execute query, we must add "Authorization : <token>" in the header
+     */
+    if (!currentUser) throw Error('only an authrized user can post photo')
+    const newPhoto = {
+        ...args.input,
+        userID: currentUser.githubLogin,
+        created: new Date(),
+    }
+    /*
+     * Save the photo into MongoDB and return id 
+     */
+    const { insertedIds } = await db.collection('photos').insert(newPhoto)
+    newPhoto.id = insertedIds[0]
+    return newPhoto
+}
+
+/*
+ * The resolver for addFakeUsers. randomUserApi is a API which can return some fake user data
+ */
+const addFakeUsers = async (root, { count }, { db }) => {
+    const randomUserApi = `https://randomuser.me/api?results=${count}`
+    const { results } = await fetch(randomUserApi).then(res => res.json())
+
+    const users = results.map(r => ({
+        githubLogin: r.login.username,
+        name: `${r.name.first} ${r.name.last}`,
+        avatar: r.picture.thumbnail,
+        githubToken: r.login.sha1
+    }))
+    /*
+     * Save the fake users to MongoDB 
+     */
+    await db.collection('users').insert(users)
+    return users
+}
+
+/*
+ *  The resolver for fakeUserAuth
+ */
+const fakeUserAuth = async (parent, { githubLogin }, { db }) => {
+    const user = await db.collection('users').findOne({ githubLogin })
+    if (!user) throw Error(`Cannot find user with githubLogin "${githubLogin}"`)
+    return {
+        token: user.githubToken,
+        user
+    }
+}
+
 /*
  * db is from context object, which was created in ApolloServer constructor 
  */
 const resolvers = {
     Query: {
-        me: (parent, args, { currentUser }) => currentUser,
+        me: (parent, args, context) => {
+            console.log(context)
+            return context.currentUser
+        },
         totalPhotos: (parent, args, { db }) => db.collection('photos').estimatedDocumentCount(),
         totalUsers: (parent, args, { db }) => db.collection('users').estimatedDocumentCount(),
         allPhotos: (parent, args, { db }) => db.collection('photos').find().toArray(),
         allUsers: (parent, args, { db }) => db.collection('users').find().toArray()
     },
     Mutation: {
-        postPhoto(parent, args) {
-            const newPhoto = {
-                id: _id++,
-                created: new Date(),
-                ...args.input
-            }
-            photos.push(newPhoto)
-            return newPhoto
-        },
-        githubAuth
+        postPhoto,
+        githubAuth,
+        addFakeUsers,
+        fakeUserAuth
     },
     Photo: {
-        url: parent => `http://mysite/img/${parent.id}.jpg`,
-        postedBy: parent => users.find(u => u.githubLogin === parent.githubUser),
+        id: parent => parent.id || parent._id,
+        url: parent => `/img/photos/${parent._id}.jpg`,
+        postedBy: (parent, args, { db }) => db.collection('users').findOne({ githubLogin: parent.userID }),
         taggedUsers: parent => tags.filter(t => t.photoID === parent.id).map(t => users.find(u => u.githubLogin === t.userID))
 
     },

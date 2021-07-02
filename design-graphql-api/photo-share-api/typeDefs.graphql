@@ -50,6 +50,10 @@ type AuthPayload{
 type Mutation {
     postPhoto(input: PostPhotoInput!): Photo!
     githubAuth(code: String!): AuthPayload!
+    # Add some fake user for testing
+    addFakeUsers(count: Int = 1):[User!]!
+    # Fake user login github
+    fakeUserAuth(githubLogin:ID!): AuthPayload!
 }
 
 # define totalPhotos query field
