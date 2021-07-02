@@ -30,7 +30,6 @@ async function start() {
             return { db, currentUser }
         }
     })
-    const context = { db }
 
     /*
      *  Create apollo express service, the mongodb client is argument as global object. 
