@@ -12,7 +12,7 @@ const typeDefs = readFileSync('./typeDefs.graphql', 'utf-8')
 const resolvers = require('./resolver')
 
 async function start() {
-
+    const app = express()
     // Reading the .env config for MongoDB connect string
     const MONGO_DB = process.env.DB_HOST
     const client = await MongoClient.connect(
@@ -20,13 +20,23 @@ async function start() {
         { useNewUrlParser: true, useUnifiedTopology: true }
     )
     const db = client.db()
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers,
+        // context could be a object or a function
+        context: async ({ req }) => {
+            const githubToken = req.headers.authorization
+            const currentUser = await db.collection('users').findOne({ githubToken })
+            return { db, currentUser }
+        }
+    })
     const context = { db }
 
     /*
      *  Create apollo express service, the mongodb client is argument as global object. 
      */
-    const server = new ApolloServer({ typeDefs, resolvers, context })
-    const app = express()
+
+
     server.applyMiddleware({ app })
 
     /*
