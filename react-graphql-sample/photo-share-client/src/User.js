@@ -22,7 +22,8 @@ const Users = () => (
      */
     <Query
         query={ROOT_QUERY}
-    // pollInterval={2000}
+        // pollInterval={2000}
+        fetchPolicy="cache-first"
     >
         {({ data, loading, refetch }) => (
             loading ? <p>loading users...</p>
@@ -35,6 +36,14 @@ const Users = () => (
         )}
     </Query>)
 
+const updateUserCache = (cache, { data: { addFakeUsers } }) => {
+    let data = cache.readQuery({ query: ROOT_QUERY })
+    /*
+     * Note here, allUsers is a array so we need to use set to create a new Array object, then React will update UI
+     */
+    data = { ...data, allUsers: [...data.allUsers, ...addFakeUsers] }
+    cache.writeQuery({ query: ROOT_QUERY, data })
+}
 
 const UserList = ({ count, users, refetchUsers }) => (
     <div>
@@ -46,7 +55,8 @@ const UserList = ({ count, users, refetchUsers }) => (
             /*
              *  refetchQueries property could execute the query after mutation sent
              */
-            refetchQueries={[{ query: ROOT_QUERY }]}
+            // refetchQueries={[{ query: ROOT_QUERY }]}
+            update={updateUserCache}
         >
             {/* 
              * Mutation component will make the mutation as a function in child

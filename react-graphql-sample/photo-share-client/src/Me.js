@@ -5,6 +5,7 @@ import CurrentUser from './CurrentUser'
 const Me = ({ logout, requestCode, signingIn }) => (
     <Query
         query={ROOT_QUERY}
+        fetchPolicy="cache-only"
     >
         {
             ({ loading, data }) => data?.me ?
