@@ -63,7 +63,7 @@ const githubAuth = async (parent, { code }, { db }) => {
     return { user, token: access_token }
 }
 
-const postPhoto = async (parent, args, { db, currentUser }) => {
+const postPhoto = async (parent, args, { db, currentUser, pubsub }) => {
     /*
      * Verify if user authorized via github 
      * Please note when execute query, we must add "Authorization : <token>" in the header
@@ -79,26 +79,48 @@ const postPhoto = async (parent, args, { db, currentUser }) => {
      */
     const { insertedIds } = await db.collection('photos').insert(newPhoto)
     newPhoto.id = insertedIds[0]
+
+    /*
+     * pubsub is a subscription event emitter, it can send the parameter to all observer who subscribed the event
+     * it's like EventEmitter in nodejs
+     * Here every observer who subscribed 'photo-added' will recieve the parameter newPhoto
+     */
+    pubsub.publish('photo-added', { newPhoto })
     return newPhoto
 }
 
 /*
  * The resolver for addFakeUsers. randomUserApi is a API which can return some fake user data
  */
-const addFakeUsers = async (root, { count }, { db }) => {
+const addFakeUsers = async (root, { count }, { db, pubsub }) => {
     const randomUserApi = `https://randomuser.me/api?results=${count}`
     const { results } = await fetch(randomUserApi).then(res => res.json())
 
+    /*
+     * Because here users don't have id, so we cannot pubsub.publish here 
+     */
     const users = results.map(r => ({
         githubLogin: r.login.username,
         name: `${r.name.first} ${r.name.last}`,
         avatar: r.picture.thumbnail,
         githubToken: r.login.sha1
     }))
+
     /*
      * Save the fake users to MongoDB 
      */
     await db.collection('users').insert(users)
+
+    /*
+     * Now new users have id, we publish the new users 
+     */
+    const newUsers = await db.collection('users')
+        .find()
+        .sort({ _id: -1 })
+        .limit(count)
+        .toArray()
+    newUsers.forEach(newUser => pubsub.publish('user-added', { newUser }))
+
     return users
 }
 
@@ -115,12 +137,19 @@ const fakeUserAuth = async (parent, { githubLogin }, { db }) => {
 }
 
 /*
+ * This is the newPhoto Subscription resolver 
+ * pubsub.asyncIterator means subscribe 'photo-added' event
+ */
+const newPhotoSubscribe = (parent, args, { pubsub }) => pubsub.asyncIterator('photo-added')
+
+const newUserSubscribe = (parent, args, { pubsub }) => pubsub.asyncIterator('user-added')
+
+/*
  * db is from context object, which was created in ApolloServer constructor 
  */
 const resolvers = {
     Query: {
         me: (parent, args, context) => {
-            console.log(context)
             return context.currentUser
         },
         totalPhotos: (parent, args, { db }) => db.collection('photos').estimatedDocumentCount(),
@@ -140,6 +169,17 @@ const resolvers = {
         postedBy: (parent, args, { db }) => db.collection('users').findOne({ githubLogin: parent.userID }),
         taggedUsers: parent => tags.filter(t => t.photoID === parent.id).map(t => users.find(u => u.githubLogin === t.userID))
 
+    },
+    Subscription: {
+        newPhoto: {
+            /*
+             * Note here, for Subscription type, we should define subscribe function for each field
+             */
+            subscribe: newPhotoSubscribe
+        },
+        newUser: {
+            subscribe: newUserSubscribe
+        }
     },
     User: {
         postedPhotos: parent => photos.filter(p => p.githubUser === parent.githubLogin),

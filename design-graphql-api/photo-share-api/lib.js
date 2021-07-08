@@ -23,10 +23,7 @@ const requestGithubUserAccount = token => fetch(
 ).then(res => res.json())
 
 const authorizeWithGithub = async (credentials) => {
-    console.log(credentials)
     const { access_token } = await requestGithubToken(credentials)
-
-    console.log(access_token)
     // const access_token = "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"
     const githubUser = await requestGithubUserAccount(access_token)
     return { ...githubUser, access_token }
