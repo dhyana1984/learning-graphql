@@ -67,5 +67,6 @@ type Query{
 
 # define photo subscription
 type Subscription{
-    newPhoto:Photo!
+    newPhoto: Photo!
+    newUser: User!
 }

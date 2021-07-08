@@ -1,9 +1,10 @@
 const { MongoClient } = require('mongodb')
 require('dotenv').config()
-const { ApolloServer } = require('apollo-server-express')
+const { ApolloServer, PubSub } = require('apollo-server-express')
 const expressPlayGround = require('graphql-playground-middleware-express').default
 const express = require('express')
 const { readFileSync } = require('fs')
+const { createServer } = require('http')
 
 /*
  *  Read schema file  
@@ -20,14 +21,19 @@ async function start() {
         { useNewUrlParser: true, useUnifiedTopology: true }
     )
     const db = client.db()
+    const pubsub = new PubSub()
     const server = new ApolloServer({
         typeDefs,
         resolvers,
         // context could be a object or a function
-        context: async ({ req }) => {
-            const githubToken = req.headers.authorization
+        context: async ({ req, connection }) => {
+            /*
+             * In subscription, there is no http request, so req is null
+             * So we need to use connection.context to get the Authorization in header
+             */
+            const githubToken = req ? req.headers.authorization : connection.context.Authorization
             const currentUser = await db.collection('users').findOne({ githubToken })
-            return { db, currentUser }
+            return { db, currentUser, pubsub }
         }
     })
 
@@ -52,7 +58,17 @@ async function start() {
     /*
      * The default GrouphQL service route:  http://localhost:4000/graphql
      */
-    app.listen({ port: 4000 }, () => console.log(`GraphQL server running @ http://localhost:4000${server.graphqlPath}`))
+    // app.listen({ port: 4000 }, () => console.log(`GraphQL server running @ http://localhost:4000${server.graphqlPath}`))
+
+    /*
+     *  httpServer is created from Express to handle http request
+     */
+    const httpServer = createServer(app)
+    /*
+     * server is a Apollo server and here is for supporting subscription
+     */
+    server.installSubscriptionHandlers(httpServer)
+    httpServer.listen({ port: 4000 }, () => console.log(`GraphQL server running at http://localhost:4000${server.graphqlPath}`))
 }
 
 start()
