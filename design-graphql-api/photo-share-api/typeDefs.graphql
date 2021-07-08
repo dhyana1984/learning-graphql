@@ -64,3 +64,8 @@ type Query{
     allPhotos(after: DateTime): [Photo!]!
     allUsers:[User!]!
 }
+
+# define photo subscription
+type Subscription{
+    newPhoto:Photo!
+}
