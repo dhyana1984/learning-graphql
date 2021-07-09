@@ -36,14 +36,17 @@ const Users = () => (
         )}
     </Query>)
 
-const updateUserCache = (cache, { data: { addFakeUsers } }) => {
-    let data = cache.readQuery({ query: ROOT_QUERY })
-    /*
-     * Note here, allUsers is a array so we need to use set to create a new Array object, then React will update UI
-     */
-    data = { ...data, allUsers: [...data.allUsers, ...addFakeUsers] }
-    cache.writeQuery({ query: ROOT_QUERY, data })
-}
+/*
+ * We have subscription for the new user, no need to use updateUserCache now
+ */
+// const updateUserCache = (cache, { data: { addFakeUsers } }) => {
+//     let data = cache.readQuery({ query: ROOT_QUERY })
+//     /*
+//      * Note here, allUsers is a array so we need to use set to create a new Array object, then React will update UI
+//      */
+//     data = { ...data, allUsers: [...data.allUsers, ...addFakeUsers] }
+//     cache.writeQuery({ query: ROOT_QUERY, data })
+// }
 
 const UserList = ({ count, users, refetchUsers }) => (
     <div>
@@ -52,11 +55,11 @@ const UserList = ({ count, users, refetchUsers }) => (
         <Mutation
             mutation={ADD_FAKE_USERS_MUTATION}
             variables={{ count: 1 }}
-            /*
-             *  refetchQueries property could execute the query after mutation sent
-             */
-            // refetchQueries={[{ query: ROOT_QUERY }]}
-            update={updateUserCache}
+        /*
+         *  refetchQueries property could execute the query after mutation sent
+         */
+        // refetchQueries={[{ query: ROOT_QUERY }]}
+        // update={updateUserCache}
         >
             {/* 
              * Mutation component will make the mutation as a function in child
