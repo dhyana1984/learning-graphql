@@ -12,9 +12,6 @@ enum PhotoCategory {
 # Customized standard type, use "scalar"
 scalar DateTime
 
-# Customized standard type, use "scalar"
-scalar Upload
-
 type User {
     githubLogin: ID!
     name: String
@@ -41,8 +38,7 @@ input PostPhotoInput{
     name: String!
     category: PhotoCategory = PORTRAIT
     description: String
-    githubUser: String!,
-    file: Upload!
+    file:Upload!
 }
 
 type AuthPayload{

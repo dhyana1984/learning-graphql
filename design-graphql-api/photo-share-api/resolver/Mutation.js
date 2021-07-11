@@ -1,7 +1,6 @@
 const { authorizeWithGithub, uploadStream } = require('../lib')
 const fetch = require('node-fetch')
 const path = require('path')
-const { ObjectID } = require('mongodb')
 
 const postPhoto = async (parent, args, { db, currentUser, pubsub }) => {
     /*
@@ -21,7 +20,8 @@ const postPhoto = async (parent, args, { db, currentUser, pubsub }) => {
     newPhoto.id = insertedIds[0]
 
     var toPath = path.join(__dirname, '..', 'assets', 'photos', `${newPhoto.id}.jpg`)
-    const { stream } = await args.input.file
+    const file = await args.input.file
+    const stream = file.createReadStream()
     await uploadStream(stream, toPath)
 
 
