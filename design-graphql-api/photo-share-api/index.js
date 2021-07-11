@@ -5,7 +5,7 @@ const expressPlayGround = require('graphql-playground-middleware-express').defau
 const express = require('express')
 const { readFileSync } = require('fs')
 const { createServer } = require('http')
-
+const path = require('path')
 /*
  *  Read schema file  
  */
@@ -59,6 +59,14 @@ async function start() {
      * The default GrouphQL service route:  http://localhost:4000/graphql
      */
     // app.listen({ port: 4000 }, () => console.log(`GraphQL server running @ http://localhost:4000${server.graphqlPath}`))
+
+    /*
+     * Use static middleware to map /img/photos to assets/photos folder 
+     */
+    app.use(
+        '/img/photos',
+        express.static(path.join(__dirname, 'assets', 'photos'))
+    )
 
     /*
      *  httpServer is created from Express to handle http request
