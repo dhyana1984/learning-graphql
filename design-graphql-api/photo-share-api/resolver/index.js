@@ -1,6 +1,7 @@
 const { postPhoto, addFakeUsers, githubAuth, fakeUserAuth } = require('./Mutation')
 const { me, totalPhotos, totalUsers, allPhotos, allUsers } = require('./Query')
 const { newPhoto, newUser } = require('./Subscription')
+const Type = require('./Type')
 
 
 /*
@@ -24,7 +25,7 @@ const resolvers = {
         newPhoto,
         newUser,
     },
-
+    ...Type
 }
 
 module.exports = resolvers
