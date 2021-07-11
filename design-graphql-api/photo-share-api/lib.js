@@ -29,6 +29,19 @@ const authorizeWithGithub = async (credentials) => {
     return { ...githubUser, access_token }
 }
 
+const uploadStream = (stream, path) => {
+    return new Promise((resolve, reject) => {
+        stream.on('error', error => {
+            if (stream.truncated) {
+                fs.unlinkSync(path)
+            }
+            reject(error)
+        }).on('end', resolve).pipe(fs.createWriteStream(path))
+
+    })
+}
+
 module.exports = {
-    authorizeWithGithub
+    authorizeWithGithub,
+    uploadStream
 }
